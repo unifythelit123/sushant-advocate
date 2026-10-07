@@ -77,7 +77,7 @@ export class MessagesPage {
   private applications = inject(ApplicationService);
 
   protected uid = computed(() => this.auth.member()?.uid ?? null);
-  protected email = computed(() => this.auth.member()?.email ?? '');
+  protected email = computed(() => this.auth.member()?.email || this.auth.member()?.phoneNumber || '');
   protected apps = signal<Application[]>([]);
   protected loading = signal(true);
   protected firstName = PROFILE.first;

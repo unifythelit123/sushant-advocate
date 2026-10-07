@@ -10,6 +10,13 @@ service firebase.storage {
         && request.auth.token.email.lower() in ['connectwithalc@gmail.com', 'pythrust@gmail.com'];
     }
 
+    // Guests (no session at all) may upload a CV; only the coordinator can read it.
+    match /cv/guest/{file} {
+      allow read: if isAdmin();
+      allow create: if request.resource.size <= 10 * 1024 * 1024
+        && request.resource.contentType == 'application/pdf';
+    }
+
     match /cv/{uid}/{file} {
       allow read: if isAdmin() || (request.auth != null && request.auth.uid == uid);
       allow create: if request.auth != null

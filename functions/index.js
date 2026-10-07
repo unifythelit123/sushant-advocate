@@ -17,7 +17,7 @@ setGlobalOptions({ region: 'asia-south1', minInstances: 0, maxInstances: 3, memo
 const GMAIL_CLIENT_ID = defineSecret('GMAIL_CLIENT_ID');
 const GMAIL_CLIENT_SECRET = defineSecret('GMAIL_CLIENT_SECRET');
 const GMAIL_REFRESH_TOKEN = defineSecret('GMAIL_REFRESH_TOKEN');
-const SITE_URL = defineString('SITE_URL', { default: 'https://sushant-advocate.web.app' });
+const SITE_URL = defineString('SITE_URL', { default: 'https://alc-app--sushant-advocate.asia-southeast1.hosted.app' });
 const ADMIN_INBOX = defineString('ADMIN_INBOX', { default: SENDER });
 
 const secrets = [GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN];
@@ -36,7 +36,8 @@ export const onApplication = onDocumentCreated({ document: 'applications/{id}', 
   const site = SITE_URL.value();
   const profession = a.profession === 'Other' ? a.professionOther : a.profession;
 
-  await db.doc(`threads/${a.uid}`).set(
+  // Guest applications (submitted with no session) have no conversation; replies go by email.
+  if (a.uid) await db.doc(`threads/${a.uid}`).set(
     {
       name: a.name,
       email: a.email,
@@ -79,8 +80,8 @@ export const onApplication = onDocumentCreated({ document: 'applications/{id}', 
       subject: 'We have received your application',
       html: layout(
         `Thank you, ${firstName(a.name)}`,
-        `<p>Your application to join the Ambedkarite Lawyers Collective has reached us. Sushant reads every application personally, and you will hear back by email.</p>
-         <p>If you would like to follow your application and write to Sushant directly, you can sign in with this email address at any time.</p>`,
+        `<p>Your application to join the Ambedkarite Lawyers Collective has reached us. Adv. Sushant Inderjeet Singh reads every application personally, and you will hear back by email.</p>
+         <p>To follow your application and write to him directly, sign in on the website with this email address or the phone number you gave. This is optional.</p>`,
         { label: 'Open my messages', url: `${site}/messages` },
       ),
     }),
@@ -126,20 +127,20 @@ export const onMessage = onDocumentCreated({ document: 'threads/{uid}/messages/{
         subject: `New message from ${thread.name || 'a visitor'}`,
         html: layout(
           `${thread.name || 'A visitor'} wrote to you`,
-          `<p style="white-space:pre-wrap;padding:14px 16px;background:#f6f4ef;border-radius:8px">${esc(m.text)}</p>
-           <p style="color:#5d6578;font-size:13px">Reply in the console so the whole conversation stays in one place.</p>`,
+          `<p style="white-space:pre-wrap;padding:14px 16px;background:#f5f5f5;border-radius:8px">${esc(m.text)}</p>
+           <p style="color:#555555;font-size:13px">Reply in the console so the whole conversation stays in one place.</p>`,
           { label: 'Reply in the console', url: `${site}/console` },
         ),
       });
     } else if (thread.email) {
       await sendMail(creds(), {
         to: thread.email,
-        subject: 'Sushant has replied to you',
+        subject: 'A reply from Adv. Sushant Inderjeet Singh',
         html: layout(
-          `A reply from Sushant`,
+          'A reply from Adv. Sushant Inderjeet Singh',
           `<p>Hello ${esc(firstName(thread.name))},</p>
-           <p style="white-space:pre-wrap;padding:14px 16px;background:#f6f4ef;border-radius:8px">${esc(m.text)}</p>
-           <p style="color:#5d6578;font-size:13px">To reply, sign in with this email address and open your messages. Replies sent from this email are not read.</p>`,
+           <p style="white-space:pre-wrap;padding:14px 16px;background:#f5f5f5;border-radius:8px">${esc(m.text)}</p>
+           <p style="color:#555555;font-size:13px">To reply, sign in on the website with this email address or your phone number and open your messages.</p>`,
           { label: 'Reply on the website', url: `${site}/messages` },
         ),
       });

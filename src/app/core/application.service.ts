@@ -57,8 +57,8 @@ export class ApplicationService {
   /** Saves to this device and to the visitor's account, so a draft can be resumed later. */
   async saveDraft(draft: Draft): Promise<void> {
     this.writeLocalDraft(draft);
-    const user = await this.auth.ensureUser();
-    await setDoc(doc(this.fb.db, 'drafts', user.uid), draft);
+    const user = await this.auth.tryUser();
+    if (user) await setDoc(doc(this.fb.db, 'drafts', user.uid), draft);
   }
 
   /** Returns whichever draft is newer: this device or the account. */
@@ -93,9 +93,10 @@ export class ApplicationService {
   }
 
   async uploadCv(file: File): Promise<CvRef> {
-    const user = await this.auth.ensureUser();
+    const user = await this.auth.tryUser();
     const safe = file.name.replace(/[^\w.\- ]+/g, '').slice(-80) || 'cv.pdf';
-    const path = `cv/${user.uid}/${Date.now()}-${safe}`;
+    const owner = user ? user.uid : 'guest';
+    const path = `cv/${owner}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
     await uploadBytes(ref(this.fb.storage, path), file, { contentType: 'application/pdf' });
     return { cvPath: path, cvName: file.name };
   }
@@ -111,7 +112,8 @@ export class ApplicationService {
   /* ---------- applications ---------- */
 
   async submit(form: ApplicationForm, cv: CvRef | null): Promise<string> {
-    const user = await this.auth.ensureUser();
+    // Submitting never depends on signing in: with no session the application is stored as a guest one.
+    const user = await this.auth.tryUser();
     const clean = Object.fromEntries(
       Object.entries(form).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]),
     ) as unknown as ApplicationForm;
@@ -120,7 +122,7 @@ export class ApplicationService {
       email: clean.email.toLowerCase(),
       cvPath: cv?.cvPath ?? '',
       cvName: cv?.cvName ?? '',
-      uid: user.uid,
+      uid: user?.uid ?? '',
       status: 'submitted',
       createdAt: serverTimestamp(),
     });

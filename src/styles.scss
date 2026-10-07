@@ -271,3 +271,9 @@ dialog.sheet::backdrop {
   width: 18px;
   height: 18px;
 }
+
+dialog.sheet.success {
+  width: min(520px, calc(100vw - 24px));
+  max-height: calc(100svh - 24px);
+  overflow-y: auto;
+}

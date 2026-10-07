@@ -106,7 +106,11 @@ const STATUSES: ApplicationStatus[] = ['submitted', 'reviewing', 'accepted', 'de
           <select class="input status-select" [ngModel]="a.status" (ngModelChange)="setStatus(a, $event)">
             @for (s of statuses; track s) { <option [value]="s">{{ labels[s] }}</option> }
           </select>
-          <button class="btn btn-primary btn-sm" type="button" (click)="message(a)">Message {{ a.name.split(' ')[0] }}</button>
+          @if (a.uid) {
+            <button class="btn btn-primary btn-sm" type="button" (click)="message(a)">Message {{ a.name.split(' ')[0] }}</button>
+          } @else {
+            <a class="btn btn-primary btn-sm" [href]="'mailto:' + a.email">Reply by email</a>
+          }
           @if (a.cvPath) {
             <button class="btn btn-ghost btn-sm" type="button" (click)="openCv(a)">Open CV</button>
           }

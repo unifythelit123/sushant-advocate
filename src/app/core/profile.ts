@@ -64,9 +64,9 @@ export const ORG = {
 };
 
 export const PROFILE = {
-  name: 'Adv. Sushant Singh',
+  name: 'Adv. Sushant Inderjeet Singh',
   first: 'Sushant',
-  initials: 'SS',
+  initials: 'SIS',
   photo: '/susant.jpeg',
   title: 'Founder, Ambedkarite Lawyers Collective',
   role: 'Advocate, Litigation and Arbitration Counsel',

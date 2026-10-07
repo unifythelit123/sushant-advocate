@@ -1,12 +1,86 @@
 import { Component, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService, authErrorMessage } from '../core/auth.service';
+import { ConfirmationResult } from 'firebase/auth';
+import { AuthService, authErrorMessage, toE164 } from '../core/auth.service';
 import { ToastService } from '../core/toast.service';
+
+type Method = 'email' | 'phone';
 
 @Component({
   selector: 'app-sign-in-panel',
   imports: [FormsModule],
   template: `
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" [class.on]="method() === 'email'" (click)="switchTo('email')">Email</button>
+      <button type="button" role="tab" [class.on]="method() === 'phone'" (click)="switchTo('phone')">Phone</button>
+    </div>
+
+    @if (method() === 'email') {
+      @if (!usePassword()) {
+        @if (linkSent()) {
+          <p class="done">A sign in link is on its way to <strong>{{ emailValue }}</strong>. Open it on this device to finish.</p>
+          <button type="button" class="btn btn-link" (click)="linkSent.set(false)">Use a different email</button>
+        } @else {
+          <form class="stack" (ngSubmit)="sendLink()" #lf="ngForm">
+            <div class="field">
+              <label for="si-email">Email</label>
+              <input id="si-email" class="input" type="email" name="email" [(ngModel)]="emailValue" required email autocomplete="email" />
+              <span class="hint">Use the email you gave in your application. We send a one time link, no password needed.</span>
+            </div>
+            <button class="btn btn-primary btn-block" type="submit" [disabled]="busy() || lf.invalid">Email me a sign in link</button>
+          </form>
+        }
+        <button type="button" class="btn btn-link alt" (click)="usePassword.set(true)">Sign in with a password instead</button>
+      } @else {
+        <form class="stack" (ngSubmit)="passwordSubmit()" #pf="ngForm">
+          <div class="field">
+            <label for="si-email2">Email</label>
+            <input id="si-email2" class="input" type="email" name="email" [(ngModel)]="emailValue" required email autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="si-pass">Password</label>
+            <input id="si-pass" class="input" type="password" name="password" [(ngModel)]="password" required minlength="8"
+              [attr.autocomplete]="mode() === 'create' ? 'new-password' : 'current-password'" />
+            @if (mode() === 'create') { <span class="hint">At least 8 characters.</span> }
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" [disabled]="busy() || pf.invalid">
+            {{ mode() === 'create' ? 'Create account' : 'Sign in' }}
+          </button>
+        </form>
+        <div class="switch">
+          @if (mode() === 'signin') {
+            <button type="button" class="btn btn-link" (click)="mode.set('create')">Create an account</button>
+            <button type="button" class="btn btn-link" (click)="reset()">Forgot password</button>
+          } @else {
+            <button type="button" class="btn btn-link" (click)="mode.set('signin')">I already have an account</button>
+          }
+          <button type="button" class="btn btn-link" (click)="usePassword.set(false)">Use an email link</button>
+        </div>
+      }
+    } @else {
+      @if (!confirmation()) {
+        <form class="stack" (ngSubmit)="sendCode()">
+          <div class="field">
+            <label for="si-phone">Mobile number</label>
+            <input id="si-phone" class="input" type="tel" name="phone" [(ngModel)]="phoneValue" required autocomplete="tel" placeholder="98765 43210" />
+            <span class="hint">Use the number you gave in your application. Indian numbers can be typed without +91.</span>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="alc-signin-phone" [disabled]="busy() || !phoneValue.trim()">Text me a code</button>
+        </form>
+      } @else {
+        <form class="stack" (ngSubmit)="verify()">
+          <div class="field">
+            <label for="si-otp">Enter the 6 digit code sent to {{ e164 }}</label>
+            <input id="si-otp" class="input otp" name="otp" [(ngModel)]="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" />
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" [disabled]="busy() || code.length < 6">Verify and sign in</button>
+          <button type="button" class="btn btn-link" (click)="confirmation.set(null)">Change number</button>
+        </form>
+      }
+    }
+
+    <div class="divider">or</div>
+
     <button type="button" class="btn btn-ghost btn-block" (click)="google()" [disabled]="busy()">
       <svg class="google-mark" viewBox="0 0 48 48" aria-hidden="true">
         <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
@@ -17,44 +91,19 @@ import { ToastService } from '../core/toast.service';
       Continue with Google
     </button>
 
-    <div class="divider">or use email</div>
-
-    <form class="email" (ngSubmit)="email()" #f="ngForm">
-      <div class="field">
-        <label for="si-email">Email</label>
-        <input id="si-email" class="input" type="email" name="email" [(ngModel)]="emailValue" required autocomplete="email" />
-      </div>
-      <div class="field">
-        <label for="si-pass">Password</label>
-        <input id="si-pass" class="input" type="password" name="password" [(ngModel)]="password" required minlength="8"
-          [attr.autocomplete]="mode() === 'create' ? 'new-password' : 'current-password'" />
-        @if (mode() === 'create') { <span class="hint">At least 8 characters.</span> }
-      </div>
-      <button class="btn btn-primary btn-block" type="submit" [disabled]="busy() || f.invalid">
-        {{ mode() === 'create' ? 'Create account' : 'Sign in' }}
-      </button>
-    </form>
-
     @if (error()) { <p class="error">{{ error() }}</p> }
-
-    <div class="switch">
-      @if (mode() === 'signin') {
-        <span class="muted">New here?</span>
-        <button type="button" class="btn btn-link" (click)="mode.set('create')">Create an account</button>
-        <span class="dot" aria-hidden="true"></span>
-        <button type="button" class="btn btn-link" (click)="reset()">Forgot password</button>
-      } @else {
-        <span class="muted">Already have an account?</span>
-        <button type="button" class="btn btn-link" (click)="mode.set('signin')">Sign in</button>
-      }
-    </div>
   `,
   styles: `
     :host { display: grid; gap: 16px; }
-    .email { display: grid; gap: 14px; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #000; }
+    .tabs button { border: 0; background: #fff; padding: 10px; font: 600 .92rem var(--sans); cursor: pointer; color: #000; }
+    .tabs button.on { background: #000; color: #fff; }
+    .stack { display: grid; gap: 14px; }
+    .done { margin: 0; padding: 12px 14px; border: 1px solid #000; font-size: .92rem; overflow-wrap: anywhere; }
+    .alt { justify-self: start; font-size: .88rem; }
+    .otp { letter-spacing: .3em; font-weight: 600; }
     .error { margin: 0; }
-    .switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: .9rem; }
-    .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--muted); }
+    .switch { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: .88rem; }
   `,
 })
 export class SignInPanel {
@@ -63,21 +112,40 @@ export class SignInPanel {
   readonly startIn = input<'signin' | 'create'>('signin');
   readonly done = output<void>();
 
+  protected method = signal<Method>('email');
+  protected usePassword = signal(false);
   protected mode = signal<'signin' | 'create'>('signin');
   protected busy = signal(false);
   protected error = signal<string | null>(null);
+  protected linkSent = signal(false);
+  protected confirmation = signal<ConfirmationResult | null>(null);
   protected emailValue = '';
   protected password = '';
+  protected phoneValue = '';
+  protected code = '';
+  protected e164 = '';
 
   ngOnInit() {
     this.mode.set(this.startIn());
+  }
+
+  protected switchTo(m: Method) {
+    this.method.set(m);
+    this.error.set(null);
   }
 
   protected async google() {
     await this.run(() => this.auth.google());
   }
 
-  protected async email() {
+  protected async sendLink() {
+    await this.run(async () => {
+      await this.auth.sendEmailLink(this.emailValue.trim());
+      this.linkSent.set(true);
+    }, false);
+  }
+
+  protected async passwordSubmit() {
     const e = this.emailValue.trim();
     await this.run(() => (this.mode() === 'create' ? this.auth.createAccount(e, this.password) : this.auth.emailSignIn(e, this.password)));
   }
@@ -90,9 +158,24 @@ export class SignInPanel {
     }
     await this.run(async () => {
       await this.auth.resetPassword(e);
-      this.error.set(null);
       this.toast.show('We have emailed you a link to reset your password.');
     }, false);
+  }
+
+  protected async sendCode() {
+    const phone = toE164(this.phoneValue);
+    if (!phone) {
+      this.error.set('Please enter a valid mobile number.');
+      return;
+    }
+    this.e164 = phone;
+    await this.run(async () => this.confirmation.set(await this.auth.sendPhoneCode(phone, 'alc-signin-phone')), false);
+  }
+
+  protected async verify() {
+    const c = this.confirmation();
+    if (!c) return;
+    await this.run(() => this.auth.confirmPhoneCode(c, this.code.trim()));
   }
 
   private async run(fn: () => Promise<void>, emit = true) {
@@ -102,6 +185,7 @@ export class SignInPanel {
       await fn();
       if (emit) this.done.emit();
     } catch (e) {
+      console.error(e);
       this.error.set(authErrorMessage(e));
     } finally {
       this.busy.set(false);

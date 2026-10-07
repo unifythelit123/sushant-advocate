@@ -23,10 +23,11 @@ service cloud.firestore {
     }
 
     match /applications/{id} {
-      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow read: if isAdmin() || (signedIn() && resource.data.uid != '' && resource.data.uid == request.auth.uid);
 
-      allow create: if signedIn()
-        && request.resource.data.uid == request.auth.uid
+      // Signing in is never required: guests submit with uid ''.
+      allow create: if ((signedIn() && request.resource.data.uid == request.auth.uid)
+          || (request.auth == null && request.resource.data.uid == ''))
         && request.resource.data.status == 'submitted'
         && request.resource.data.createdAt == request.time
         && request.resource.data.keys().hasOnly([
@@ -41,7 +42,9 @@ service cloud.firestore {
         && shortText(request.resource.data.experience, 3000)
         && shortText(request.resource.data.remarks, 2000)
         && shortText(request.resource.data.education, 300)
-        && (request.resource.data.cvPath == '' || request.resource.data.cvPath.matches('^cv/' + request.auth.uid + '/.+'));
+        && (request.resource.data.cvPath == ''
+            || request.resource.data.cvPath.matches('^cv/guest/[^/]+$')
+            || (signedIn() && request.resource.data.cvPath.matches('^cv/' + request.auth.uid + '/[^/]+$')));
 
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])

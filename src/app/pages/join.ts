@@ -1,4 +1,4 @@
-import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -6,12 +6,13 @@ import { debounceTime } from 'rxjs';
 import { ApplicationService } from '../core/application.service';
 import { CATEGORIES, CvRef, INDIAN_STATES, OTHER, PROFESSIONS, ApplicationForm } from '../core/models';
 import { ToastService } from '../core/toast.service';
+import { FollowUp } from '../shared/follow-up';
 
 const req = Validators.required;
 
 @Component({
   selector: 'app-join',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, FollowUp],
   template: `
     <section class="wrap head">
       <p class="eyebrow">Membership application</p>
@@ -180,6 +181,12 @@ const req = Validators.required;
         </div>
       </aside>
     </form>
+
+    <dialog class="sheet success" #done (cancel)="$event.preventDefault()">
+      @if (sent(); as r) {
+        <app-follow-up [email]="r.email" [contact]="r.contact" [refNo]="r.id" (finish)="afterSubmit($event)" />
+      }
+    </dialog>
   `,
   styles: `
     .head { padding-top: 44px; }
@@ -223,6 +230,8 @@ export class JoinPage {
   private apps = inject(ApplicationService);
   private toast = inject(ToastService);
   private router = inject(Router);
+  private doneDlg = viewChild<ElementRef<HTMLDialogElement>>('done');
+  protected sent = signal<{ id: string; email: string; contact: string } | null>(null);
 
   protected readonly professions = PROFESSIONS;
   protected readonly categories = CATEGORIES;
@@ -367,13 +376,26 @@ export class JoinPage {
     }
     this.busy.set(true);
     try {
-      const id = await this.apps.submit(this.form.getRawValue(), this.cv());
-      this.router.navigate(['/join/submitted'], { queryParams: { ref: id } });
+      const values = this.form.getRawValue();
+      const id = await this.apps.submit(values, this.cv());
+      this.sent.set({ id, email: values.email.trim().toLowerCase(), contact: values.contact });
+      this.doneDlg()?.nativeElement.showModal();
     } catch (e) {
       console.error(e);
       this.submitError.set('We could not submit just now. Your draft is safe. Please try again.');
     } finally {
       this.busy.set(false);
     }
+  }
+
+  protected afterSubmit(choice: 'messages' | 'skip') {
+    this.doneDlg()?.nativeElement.close();
+    this.form.reset();
+    this.cv.set(null);
+    this.savedAt.set(null);
+    this.restored.set(false);
+    this.submitted.set(false);
+    this.sent.set(null);
+    this.router.navigateByUrl(choice === 'messages' ? '/messages' : '/');
   }
 }

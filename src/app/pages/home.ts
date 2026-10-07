@@ -135,12 +135,6 @@ import { Icon } from '../shared/icon';
 
         <aside class="founder-side">
           <div class="side-block">
-            <span class="label">Professional standing</span>
-            <ul class="lines">
-              @for (s of p.standing; track s) { <li>{{ s }}</li> }
-            </ul>
-          </div>
-          <div class="side-block">
             <span class="label">Education</span>
             <ul class="lines">
               @for (e of p.education; track e.degree) {

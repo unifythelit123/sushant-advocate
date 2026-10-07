@@ -65,8 +65,8 @@ import { PROFILE } from '../core/profile';
   styles: `
     :host { display: block; }
     .head { padding: 28px 28px 20px; text-align: center; border-bottom: 1px solid var(--line); }
-    .tick { width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 50%; border: 2px solid #000; display: grid; place-items: center; }
-    .tick svg { width: 26px; height: 26px; fill: none; stroke: #000; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    .tick { width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 50%; background: var(--good-soft); border: 2px solid var(--good); display: grid; place-items: center; }
+    .tick svg { width: 26px; height: 26px; fill: none; stroke: var(--good); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
     h2 { font-size: 1.45rem; margin: 6px 0 8px; }
     .head p { margin: 0; }
     .head strong { overflow-wrap: anywhere; }
@@ -75,7 +75,7 @@ import { PROFILE } from '../core/profile';
     h3 { font-size: 1.1rem; margin: 0; }
     .opt { font: 400 .85rem var(--sans); color: var(--muted); }
     .small { font-size: .88rem; margin: 0; }
-    .done { margin: 0; padding: 12px 14px; border: 1px solid #000; font-size: .92rem; overflow-wrap: anywhere; }
+    .done { margin: 0; padding: 12px 14px; border: 1px solid var(--good); background: var(--good-soft); color: #0d4f27; font-size: .92rem; overflow-wrap: anywhere; }
     .otp { display: grid; gap: 6px; }
     .row { display: flex; gap: 8px; }
     .row .input { letter-spacing: .3em; font-weight: 600; }

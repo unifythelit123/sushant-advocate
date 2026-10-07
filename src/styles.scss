@@ -14,7 +14,9 @@
   --ok-soft: #000000;
   --warn: #000000;
   --warn-soft: #e6e6e6;
-  --bad: #000000;
+  --bad: #c0261c;
+  --good: #157a3c;
+  --good-soft: #eaf6ee;
   --bad-soft: #ffffff;
   --radius: 4px;
   --shadow: none;
@@ -179,11 +181,8 @@ a {
 }
 .error {
   font-size: 0.82rem;
-  color: #000;
+  color: var(--bad);
   font-weight: 600;
-}
-.error::before {
-  content: '! ';
 }
 .input {
   width: 100%;
@@ -206,8 +205,10 @@ textarea.input {
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12);
 }
 .input.invalid {
-  border-color: #000;
-  border-width: 2px;
+  border-color: var(--bad);
+}
+.input.invalid:focus {
+  box-shadow: 0 0 0 3px rgba(192, 38, 28, 0.15);
 }
 
 .chip {

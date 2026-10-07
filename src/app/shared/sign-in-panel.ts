@@ -99,7 +99,7 @@ type Method = 'email' | 'phone';
     .tabs button { border: 0; background: #fff; padding: 10px; font: 600 .92rem var(--sans); cursor: pointer; color: #000; }
     .tabs button.on { background: #000; color: #fff; }
     .stack { display: grid; gap: 14px; }
-    .done { margin: 0; padding: 12px 14px; border: 1px solid #000; font-size: .92rem; overflow-wrap: anywhere; }
+    .done { margin: 0; padding: 12px 14px; border: 1px solid var(--good); background: var(--good-soft); color: #0d4f27; font-size: .92rem; overflow-wrap: anywhere; }
     .alt { justify-self: start; font-size: .88rem; }
     .otp { letter-spacing: .3em; font-weight: 600; }
     .error { margin: 0; }

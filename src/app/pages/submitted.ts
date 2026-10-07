@@ -44,8 +44,8 @@ import { PROFILE } from '../core/profile';
   styles: `
     .page { max-width: 640px; padding-top: 48px; display: grid; gap: 20px; }
     .done { padding: 36px; text-align: center; }
-    .tick { width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%; background: var(--ok-soft); display: grid; place-items: center; }
-    .tick svg { width: 28px; height: 28px; fill: none; stroke: var(--ok); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    .tick { width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%; background: var(--good-soft); display: grid; place-items: center; }
+    .tick svg { width: 28px; height: 28px; fill: none; stroke: var(--good); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
     h1 { font-size: 1.8rem; margin-top: 6px; }
     .refno { display: inline-block; margin-top: 10px; font: 500 .82rem ui-monospace, Menlo, monospace; color: var(--muted); }
     .next { padding: 28px; display: grid; gap: 14px; }

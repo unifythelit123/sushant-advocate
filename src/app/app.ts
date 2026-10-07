@@ -30,7 +30,7 @@ import { Icon } from './shared/icon';
             <a routerLink="/join" routerLinkActive="on">Join</a>
             <a routerLink="/messages" routerLinkActive="on">{{ auth.member() ? 'My messages' : 'Write to ' + first }}</a>
             @if (auth.isAdmin()) {
-              <a routerLink="/console" routerLinkActive="on">Console</a>
+              <a routerLink="/admin" routerLinkActive="on">Admin</a>
             }
             @if (auth.member()) {
               <button class="btn btn-ghost btn-sm" type="button" (click)="signOut()">Sign out</button>

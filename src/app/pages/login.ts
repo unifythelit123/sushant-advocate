@@ -85,6 +85,6 @@ export class LoginPage {
   protected go() {
     const target = this.next();
     const safe = target && target.startsWith('/') && !target.startsWith('//') ? target : null;
-    this.router.navigateByUrl(safe ?? (this.auth.isAdmin() ? '/console' : '/messages'));
+    this.router.navigateByUrl(safe ?? (this.auth.isAdmin() ? '/admin' : '/messages'));
   }
 }

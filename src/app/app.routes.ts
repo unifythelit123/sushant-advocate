@@ -7,6 +7,7 @@ export const routes: Routes = [
   { path: 'join/submitted', loadComponent: () => import('./pages/submitted').then((m) => m.SubmittedPage), title: 'Application received' },
   { path: 'login', loadComponent: () => import('./pages/login').then((m) => m.LoginPage), title: 'Sign in' },
   { path: 'messages', canActivate: [memberGuard], loadComponent: () => import('./pages/messages').then((m) => m.MessagesPage), title: 'My messages' },
-  { path: 'console', canActivate: [adminGuard], loadComponent: () => import('./pages/console').then((m) => m.ConsolePage), title: 'Console' },
+  { path: 'admin', canActivate: [adminGuard], loadComponent: () => import('./pages/console').then((m) => m.ConsolePage), title: 'Admin' },
+  { path: 'console', redirectTo: 'admin' },
   { path: '**', redirectTo: '' },
 ];

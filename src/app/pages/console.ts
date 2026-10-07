@@ -6,8 +6,24 @@ import { ThreadService } from '../core/thread.service';
 import { ToastService } from '../core/toast.service';
 import { Application, ApplicationStatus, STATUS_LABEL, Thread } from '../core/models';
 import { Chat } from '../shared/chat';
+import { FirebaseService } from '../core/firebase.service';
+import { httpsCallable } from 'firebase/functions';
 
-type Tab = 'applications' | 'messages';
+type Tab = 'applications' | 'users' | 'messages';
+
+interface AppUser {
+  uid: string;
+  name: string;
+  email: string;
+  phone: string;
+  providers: string[];
+  created: string;
+  lastSignIn: string;
+  verified: boolean;
+  disabled: boolean;
+  applications: number;
+  appName: string;
+}
 const STATUSES: ApplicationStatus[] = ['submitted', 'reviewing', 'accepted', 'declined'];
 
 @Component({
@@ -20,10 +36,19 @@ const STATUSES: ApplicationStatus[] = ['submitted', 'reviewing', 'accepted', 'de
           <button role="tab" [class.on]="tab() === 'applications'" (click)="tab.set('applications')">
             Applications <span class="count">{{ apps().length }}</span>
           </button>
+          <button role="tab" [class.on]="tab() === 'users'" (click)="showUsers()">
+            Users @if (users().length) { <span class="count">{{ users().length }}</span> }
+          </button>
           <button role="tab" [class.on]="tab() === 'messages'" (click)="tab.set('messages')">
             Messages @if (unread()) { <span class="count hot">{{ unread() }}</span> }
           </button>
         </div>
+        @if (tab() === 'users') {
+          <div class="tools">
+            <input class="input search" type="search" placeholder="Search name, email, phone" [(ngModel)]="search" />
+            <button class="btn btn-ghost btn-sm" type="button" (click)="loadUsers()" [disabled]="usersLoading()">Refresh</button>
+          </div>
+        }
         @if (tab() === 'applications') {
           <div class="tools">
             <input class="input search" type="search" placeholder="Search name, city, email" [(ngModel)]="search" />
@@ -57,6 +82,28 @@ const STATUSES: ApplicationStatus[] = ['submitted', 'reviewing', 'accepted', 'de
                 </tr>
               } @empty {
                 <tr><td colspan="5" class="muted empty">{{ loading() ? 'Loading...' : 'No applications here yet.' }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else if (tab() === 'users') {
+        <p class="muted note">Everyone who has created an account by Google, email or phone. Visitors who only submitted the form without signing in are listed under Applications.</p>
+        <div class="card table-card">
+          <table>
+            <thead>
+              <tr><th>Name</th><th class="hide-xs">Signed in with</th><th class="hide-sm">Joined</th><th class="hide-sm">Last active</th><th>Applied</th></tr>
+            </thead>
+            <tbody>
+              @for (u of filteredUsers(); track u.uid) {
+                <tr (click)="openUser(u)">
+                  <td><strong>{{ u.name || u.appName || 'No name' }}</strong><span class="sub">{{ u.email || u.phone || u.uid }}@if (u.email && u.phone) { &middot; {{ u.phone }} }</span></td>
+                  <td class="hide-xs">{{ u.providers.join(', ') }}</td>
+                  <td class="hide-sm">{{ u.created | date: 'd MMM y' }}</td>
+                  <td class="hide-sm">{{ u.lastSignIn | date: 'd MMM, h:mm a' }}</td>
+                  <td>{{ u.applications ? u.applications : 'No' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5" class="muted empty">{{ usersLoading() ? 'Loading...' : 'No signed up users yet.' }}</td></tr>
               }
             </tbody>
           </table>
@@ -148,6 +195,7 @@ const STATUSES: ApplicationStatus[] = ['submitted', 'reviewing', 'accepted', 'de
     .on .count { background: rgba(255,255,255,.2); color: #fff; }
     .count.hot { background: var(--bad); color: #fff; }
     .tools { display: flex; gap: 10px; align-items: center; }
+    .note { font-size: .88rem; margin: 18px 0 12px; }
     .search { width: 280px; min-height: 36px; padding: 6px 12px; }
     .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 12px; }
     .filter { border: 1px solid var(--line-strong); background: #fff; border-radius: 99px; padding: 5px 12px; font: 500 .85rem var(--sans); cursor: pointer; color: var(--ink-2); }
@@ -211,6 +259,7 @@ export class ConsolePage {
   private applications = inject(ApplicationService);
   private threadSvc = inject(ThreadService);
   private toast = inject(ToastService);
+  private fb = inject(FirebaseService);
   private dlg = viewChild<ElementRef<HTMLDialogElement>>('dlg');
 
   protected readonly statuses = STATUSES;
@@ -224,6 +273,57 @@ export class ConsolePage {
   protected selected = signal<Application | null>(null);
   protected activeThread = signal<Thread | null>(null);
   private searchTerm = signal('');
+  protected users = signal<AppUser[]>([]);
+  protected usersLoading = signal(false);
+  private usersLoaded = false;
+
+  protected filteredUsers = computed(() => {
+    const q = this.searchTerm().trim().toLowerCase();
+    return this.users().filter(
+      (u) => !q || [u.name, u.appName, u.email, u.phone].some((x) => x?.toLowerCase().includes(q)),
+    );
+  });
+
+  protected showUsers() {
+    this.tab.set('users');
+    if (!this.usersLoaded) this.loadUsers();
+  }
+
+  protected async loadUsers() {
+    this.usersLoading.set(true);
+    try {
+      const res = await httpsCallable<unknown, { users: AppUser[] }>(this.fb.functions, 'listUsers')({});
+      this.users.set(res.data.users);
+      this.usersLoaded = true;
+    } catch (e) {
+      console.error(e);
+      this.toast.show('Could not load users.');
+    } finally {
+      this.usersLoading.set(false);
+    }
+  }
+
+  protected openUser(u: AppUser) {
+    const app = this.apps().find((a) => a.uid === u.uid);
+    if (app) {
+      this.open(app);
+      return;
+    }
+    const existing = this.threads().find((t) => t.id === u.uid);
+    this.activeThread.set(
+      existing ?? {
+        id: u.uid,
+        name: u.name || u.email || u.phone,
+        email: u.email,
+        lastMessage: '',
+        lastFrom: 'admin',
+        lastAt: null,
+        unreadForAdmin: false,
+        unreadForUser: false,
+      },
+    );
+    this.tab.set('messages');
+  }
 
   get search() {
     return this.searchTerm();

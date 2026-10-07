@@ -26,6 +26,9 @@ const creds = () => ({
   clientSecret: GMAIL_CLIENT_SECRET.value(),
   refreshToken: GMAIL_REFRESH_TOKEN.value(),
 });
+const ADMIN_EMAILS = ['connectwithalc@gmail.com', 'unifythelit@gmail.com'];
+const isAdmin = (auth) =>
+  !!auth?.token?.email && auth.token.email_verified === true && ADMIN_EMAILS.includes(auth.token.email.toLowerCase());
 const firstName = (n) => String(n || '').trim().split(/\s+/)[0] || 'there';
 const preview = (t, n = 140) => (t.length > n ? `${t.slice(0, n)}...` : t);
 
@@ -70,9 +73,9 @@ export const onApplication = onDocumentCreated({ document: 'applications/{id}', 
           ['Expertise', a.expertise],
           ['Past experience', a.experience],
           ['Remarks', a.remarks],
-          ['CV attached', a.cvPath ? 'Yes, open it in the console' : 'No'],
+          ['CV attached', a.cvPath ? 'Yes, open it in admin' : 'No'],
         ]),
-        { label: 'Open the console', url: `${site}/console` },
+        { label: 'Open admin', url: `${site}/admin` },
       ),
     }),
     sendMail(creds(), {
@@ -128,8 +131,8 @@ export const onMessage = onDocumentCreated({ document: 'threads/{uid}/messages/{
         html: layout(
           `${thread.name || 'A visitor'} wrote to you`,
           `<p style="white-space:pre-wrap;padding:14px 16px;background:#f5f5f5;border-radius:8px">${esc(m.text)}</p>
-           <p style="color:#555555;font-size:13px">Reply in the console so the whole conversation stays in one place.</p>`,
-          { label: 'Reply in the console', url: `${site}/console` },
+           <p style="color:#555555;font-size:13px">Reply in admin so the whole conversation stays in one place.</p>`,
+          { label: 'Reply in admin', url: `${site}/admin` },
         ),
       });
     } else if (thread.email) {
@@ -198,4 +201,46 @@ export const mergeAnonymous = onCall(async (req) => {
   await batch.commit();
   await getAuth().deleteUser(from).catch(() => undefined);
   return { moved: apps.size };
+});
+
+/** Coordinator only: every account created by Google, email or phone, with how many applications each has sent. */
+export const listUsers = onCall(async (req) => {
+  if (!isAdmin(req.auth)) throw new HttpsError('permission-denied', 'Only the coordinator can see users.');
+
+  const counts = new Map();
+  const names = new Map();
+  const apps = await db.collection('applications').select('uid', 'name').get();
+  apps.forEach((d) => {
+    const { uid, name } = d.data();
+    if (!uid) return;
+    counts.set(uid, (counts.get(uid) ?? 0) + 1);
+    if (!names.has(uid)) names.set(uid, name);
+  });
+
+  const label = { 'google.com': 'Google', password: 'Email and password', phone: 'Phone', emailLink: 'Email link' };
+  const users = [];
+  let pageToken;
+  do {
+    const page = await getAuth().listUsers(1000, pageToken);
+    for (const u of page.users) {
+      if (!u.providerData.length) continue; // anonymous sessions, not real accounts
+      users.push({
+        uid: u.uid,
+        name: u.displayName ?? '',
+        email: u.email ?? '',
+        phone: u.phoneNumber ?? '',
+        providers: [...new Set(u.providerData.map((p) => label[p.providerId] ?? p.providerId))],
+        created: u.metadata.creationTime,
+        lastSignIn: u.metadata.lastSignInTime,
+        verified: u.emailVerified,
+        disabled: u.disabled,
+        applications: counts.get(u.uid) ?? 0,
+        appName: names.get(u.uid) ?? '',
+      });
+    }
+    pageToken = page.pageToken;
+  } while (pageToken);
+
+  users.sort((a, b) => Date.parse(b.created) - Date.parse(a.created));
+  return { users };
 });

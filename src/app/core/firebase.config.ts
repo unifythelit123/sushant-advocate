@@ -8,6 +8,6 @@ export const firebaseConfig = {
 };
 
 /** People who see the coordinator console. Keep in sync with firestore.rules and storage.rules. */
-export const ADMIN_EMAILS = ['connectwithalc@gmail.com', 'pythrust@gmail.com'];
+export const ADMIN_EMAILS = ['connectwithalc@gmail.com', 'unifythelit@gmail.com'];
 
 export const FUNCTIONS_REGION = 'asia-south1';

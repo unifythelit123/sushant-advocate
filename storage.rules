@@ -7,7 +7,7 @@ service firebase.storage {
     function isAdmin() {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email.lower() in ['connectwithalc@gmail.com', 'pythrust@gmail.com'];
+        && request.auth.token.email.lower() in ['connectwithalc@gmail.com', 'unifythelit@gmail.com'];
     }
 
     // Guests (no session at all) may upload a CV; only the coordinator can read it.

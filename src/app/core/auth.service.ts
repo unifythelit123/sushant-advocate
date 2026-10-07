@@ -181,14 +181,31 @@ export class AuthService {
 
   /* ---------- phone OTP ---------- */
 
-  /** Sends an SMS code. `buttonId` is the element the invisible reCAPTCHA attaches to. */
-  async sendPhoneCode(phone: string, buttonId: string): Promise<ConfirmationResult> {
-    this.recaptcha?.clear();
-    this.recaptcha = new RecaptchaVerifier(this.fb.auth, buttonId, { size: 'invisible' });
+  /** Sends an SMS code. The invisible reCAPTCHA lives in its own element that never leaves the page. */
+  async sendPhoneCode(phone: string, _buttonId?: string): Promise<ConfirmationResult> {
+    let box = document.getElementById('alc-recaptcha');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'alc-recaptcha';
+      box.style.cssText = 'position:fixed;bottom:0;right:0;z-index:60;';
+      document.body.appendChild(box);
+    }
+    if (!this.recaptcha) {
+      this.recaptcha = new RecaptchaVerifier(this.fb.auth, box, { size: 'invisible' });
+      await this.recaptcha.render();
+    }
     const current = this.fb.auth.currentUser;
-    return current?.isAnonymous
-      ? linkWithPhoneNumber(current, phone, this.recaptcha)
-      : signInWithPhoneNumber(this.fb.auth, phone, this.recaptcha);
+    try {
+      return current?.isAnonymous
+        ? await linkWithPhoneNumber(current, phone, this.recaptcha)
+        : await signInWithPhoneNumber(this.fb.auth, phone, this.recaptcha);
+    } catch (e) {
+      // A failed attempt spends the reCAPTCHA token; start fresh next time.
+      this.recaptcha.clear();
+      this.recaptcha = undefined;
+      box.innerHTML = '';
+      throw e;
+    }
   }
 
   async confirmPhoneCode(result: ConfirmationResult, code: string): Promise<void> {
@@ -260,6 +277,8 @@ export function authErrorMessage(e: unknown): string {
     'auth/operation-not-allowed': 'This sign in method is not switched on yet. Please try another.',
     'auth/unauthorized-domain': 'Sign in is not yet allowed on this web address.',
     'auth/invalid-phone-number': 'That phone number does not look right.',
+    'auth/quota-exceeded': 'Too many codes sent today. Please use email instead.',
+    'auth/captcha-check-failed': 'Verification failed. Please try again.',
     'auth/invalid-verification-code': 'That code is not correct. Please check the SMS.',
     'auth/code-expired': 'That code has expired. Send a new one.',
     'auth/invalid-action-code': 'This sign in link has expired or was already used. Request a new one.',

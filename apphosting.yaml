@@ -1,0 +1,7 @@
+# Firebase App Hosting runtime settings. Strictly pay per use: nothing stays running when idle.
+runConfig:
+  minInstances: 0
+  maxInstances: 2
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512

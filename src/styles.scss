@@ -1,1 +1,273 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --ink: #000000;
+  --ink-2: #1f1f1f;
+  --muted: #555555;
+  --line: #e4e4e4;
+  --line-strong: #c4c4c4;
+  --paper: #ffffff;
+  --tint: #f5f5f5;
+  --card: #ffffff;
+  --blue: #000000;
+  --blue-deep: #000000;
+  --blue-soft: #f2f2f2;
+  --ok: #000000;
+  --ok-soft: #000000;
+  --warn: #000000;
+  --warn-soft: #e6e6e6;
+  --bad: #000000;
+  --bad-soft: #ffffff;
+  --radius: 4px;
+  --shadow: none;
+  --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+  -webkit-text-size-adjust: 100%;
+}
+
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+img {
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--serif);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+a {
+  color: var(--blue);
+}
+
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (max-width: 380px) {
+  html,
+  body {
+    font-size: 15px;
+  }
+  .wrap {
+    padding: 0 14px;
+  }
+  .btn {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px 18px;
+  text-align: center;
+  line-height: 1.25;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  font: 600 0.95rem var(--sans);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #2b2b2b;
+}
+.btn-ghost {
+  background: #fff;
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--ink-2);
+}
+.btn-link {
+  background: none;
+  border: 0;
+  color: var(--blue);
+  padding: 0;
+  min-height: 0;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.btn-sm {
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+.btn-block {
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field > label,
+.field > .label {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.req {
+  color: var(--bad);
+  margin-left: 2px;
+}
+.hint {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.error {
+  font-size: 0.82rem;
+  color: #000;
+  font-weight: 600;
+}
+.error::before {
+  content: '! ';
+}
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: #fff;
+  font: 400 0.95rem var(--sans);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+textarea.input {
+  min-height: 110px;
+  resize: vertical;
+}
+.input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12);
+}
+.input.invalid {
+  border-color: #000;
+  border-width: 2px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #fff;
+  color: #000;
+  border: 1px solid #000;
+  white-space: nowrap;
+}
+.chip.reviewing {
+  background: #e6e6e6;
+  border-color: #e6e6e6;
+}
+.chip.accepted {
+  background: #000;
+  color: #fff;
+}
+.chip.declined {
+  color: var(--muted);
+  border-color: var(--line-strong);
+  text-decoration: line-through;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+dialog.sheet {
+  width: min(1040px, 92vw);
+  max-height: 88vh;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0;
+  color: var(--ink);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+}
+dialog.sheet::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.google-mark {
+  width: 18px;
+  height: 18px;
+}

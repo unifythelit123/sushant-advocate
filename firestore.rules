@@ -1,0 +1,80 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Keep in sync with src/app/core/firebase.config.ts and storage.rules
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in ['connectwithalc@gmail.com', 'pythrust@gmail.com'];
+    }
+
+    function owns(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function shortText(v, max) {
+      return v is string && v.size() <= max;
+    }
+
+    match /applications/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.keys().hasOnly([
+          'name', 'currentCity', 'homeState', 'homeCity', 'profession', 'professionOther',
+          'education', 'caste', 'casteOther', 'linkedin', 'purpose', 'expertise', 'experience',
+          'contact', 'email', 'remarks', 'cvPath', 'cvName', 'uid', 'status', 'createdAt'
+        ])
+        && shortText(request.resource.data.name, 120) && request.resource.data.name.size() > 0
+        && shortText(request.resource.data.email, 160) && request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+        && shortText(request.resource.data.purpose, 3000) && request.resource.data.purpose.size() > 0
+        && shortText(request.resource.data.expertise, 3000)
+        && shortText(request.resource.data.experience, 3000)
+        && shortText(request.resource.data.remarks, 2000)
+        && shortText(request.resource.data.education, 300)
+        && (request.resource.data.cvPath == '' || request.resource.data.cvPath.matches('^cv/' + request.auth.uid + '/.+'));
+
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status in ['submitted', 'reviewing', 'accepted', 'declined'];
+
+      allow delete: if false;
+    }
+
+    match /drafts/{uid} {
+      allow read, write: if owns(uid);
+    }
+
+    // One private conversation per person. The summary doc is written by Cloud Functions.
+    match /threads/{uid} {
+      allow read: if owns(uid) || isAdmin();
+      allow update: if (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['unreadForAdmin']))
+        || (owns(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['unreadForUser']));
+
+      match /messages/{mid} {
+        allow read: if owns(uid) || isAdmin();
+        allow create: if request.resource.data.keys().hasOnly(['from', 'text', 'at'])
+          && request.resource.data.at == request.time
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 4000
+          && ((owns(uid) && request.resource.data.from == 'user')
+              || (isAdmin() && request.resource.data.from == 'admin'));
+        allow update, delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

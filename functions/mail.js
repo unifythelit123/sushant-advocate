@@ -30,17 +30,51 @@ const b64 = (s) => Buffer.from(s, 'utf8').toString('base64');
 const wrap = (s) => s.replace(/.{1,76}/g, '$&\r\n');
 const header = (s) => `=?UTF-8?B?${b64(s)}?=`;
 
+/** Plain text twin of the HTML body. Mail filters trust messages that carry both. */
+function toText(html) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, '$2: $1')
+    .replace(/<\/(p|tr|h1|div)>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/td>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export async function sendMail(creds, { to, subject, html, replyTo }) {
+  const boundary = `alc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+  const domain = SENDER.split('@')[1];
   const lines = [
     `From: ${header(SENDER_NAME)} <${SENDER}>`,
     `To: ${to}`,
     `Subject: ${header(subject)}`,
+    `Date: ${new Date().toUTCString()}`,
+    `Message-ID: <${boundary}@${domain}>`,
     ...(replyTo ? [`Reply-To: ${replyTo}`] : []),
     'MIME-Version: 1.0',
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    '',
+    `--${boundary}`,
+    'Content-Type: text/plain; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    wrap(b64(toText(html))),
+    `--${boundary}`,
     'Content-Type: text/html; charset=UTF-8',
     'Content-Transfer-Encoding: base64',
     '',
     wrap(b64(html)),
+    `--${boundary}--`,
+    '',
   ];
   const raw = Buffer.from(lines.join('\r\n'), 'utf8').toString('base64url');
   const token = await accessToken(creds);

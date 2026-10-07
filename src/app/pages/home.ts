@@ -155,7 +155,7 @@ import { Icon } from '../shared/icon';
               <a [href]="p.social.x" target="_blank" rel="noopener" aria-label="X"><app-icon name="x" /></a>
               <a [href]="p.social.instagram" target="_blank" rel="noopener" aria-label="Instagram"><app-icon name="instagram" /></a>
               <a [href]="p.social.facebook" target="_blank" rel="noopener" aria-label="Facebook"><app-icon name="facebook" /></a>
-              <a [href]="p.social.utl" target="_blank" rel="noopener" aria-label="Mentor profile on Unify the Lit"><app-icon name="globe" /></a>
+              <a [href]="p.social.utl" target="_blank" rel="noopener" aria-label="Community profile on Unify the Lit" title="Community profile on Unify the Lit"><app-icon name="community" /></a>
             </div>
           </div>
         </aside>
@@ -194,7 +194,7 @@ import { Icon } from '../shared/icon';
     .principle i { width: 4px; height: 4px; background: #000; border-radius: 50%; }
     .founder { margin: 0; border: 1px solid #000; background: #fff; }
     .photo { height: clamp(280px, 50svh, 400px); overflow: hidden; background: #000; }
-    .photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; display: block; filter: grayscale(100%) contrast(1.05); }
+    .photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; display: block; }
     figcaption { padding: 14px 18px 16px; display: grid; gap: 2px; border-top: 1px solid #000; }
     figcaption strong { font: 600 1.2rem var(--serif); }
     figcaption .muted { font-size: .84rem; line-height: 1.4; }

@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 
-export type IconName = 'whatsapp' | 'linkedin' | 'x' | 'instagram' | 'facebook' | 'globe' | 'mail';
+export type IconName = 'whatsapp' | 'linkedin' | 'x' | 'instagram' | 'facebook' | 'globe' | 'mail' | 'community';
 
 const FILLED: Partial<Record<IconName, string>> = {
   whatsapp:
@@ -31,6 +31,14 @@ const FILLED: Partial<Record<IconName, string>> = {
             <g fill="none" stroke="currentColor" stroke-width="1.8">
               <circle cx="12" cy="12" r="9.5" />
               <path d="M2.5 12h19M12 2.5c2.6 2.6 3.9 5.8 3.9 9.5S14.6 18.9 12 21.5C9.4 18.9 8.1 15.7 8.1 12S9.4 5.1 12 2.5z" />
+            </g>
+          }
+          @case ('community') {
+            <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <circle cx="9" cy="8" r="3.2" />
+              <path d="M3 19.5c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" />
+              <circle cx="17" cy="9" r="2.5" />
+              <path d="M16 14.2c3 .2 5 2.1 5 4.8" />
             </g>
           }
           @case ('mail') {

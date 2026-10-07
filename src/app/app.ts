@@ -67,7 +67,7 @@ import { Icon } from './shared/icon';
             <a [href]="p.social.x" target="_blank" rel="noopener" aria-label="X" title="X"><app-icon name="x" /></a>
             <a [href]="p.social.instagram" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><app-icon name="instagram" /></a>
             <a [href]="p.social.facebook" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><app-icon name="facebook" /></a>
-            <a [href]="p.social.utl" target="_blank" rel="noopener" aria-label="Mentor profile on Unify the Lit" title="Unify the Lit mentor profile"><app-icon name="globe" /></a>
+            <a [href]="p.social.utl" target="_blank" rel="noopener" aria-label="Community profile on Unify the Lit" title="Community profile on Unify the Lit"><app-icon name="community" /></a>
           </div>
         </div>
       </div>

@@ -101,6 +101,6 @@ export const PROFILE = {
     x: 'https://x.com/sushantijs',
     instagram: 'https://www.instagram.com/sushantijs/',
     facebook: 'https://www.facebook.com/sushantsinghadvocate/',
-    utl: 'https://unifythelit.com/mentors/sushant-singh',
+    utl: 'https://unifythelit.com/mentors/sushant-inderjeet-singh',
   },
 };

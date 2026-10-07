@@ -71,7 +71,13 @@ import { Icon } from './shared/icon';
           </div>
         </div>
       </div>
-      <div class="wrap legal muted">&copy; {{ year }} {{ org.name }}</div>
+      <div class="wrap legal muted">
+        <span>&copy; {{ year }} {{ org.name }}</span>
+        <div class="legal-links">
+          <a routerLink="/privacy">Privacy Policy</a>
+          <a routerLink="/terms">Terms of Use</a>
+        </div>
+      </div>
     </footer>
 
     @if (toast.message(); as msg) {
@@ -106,7 +112,9 @@ import { Icon } from './shared/icon';
     .icons { display: flex; flex-wrap: wrap; gap: 8px; }
     .icons a { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; color: #000; }
     .icons a:hover { background: #000; color: #fff; border-color: #000; }
-    .legal { font-size: .8rem; padding: 28px 20px 32px; }
+    .legal { font-size: .8rem; padding: 28px 20px 32px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; }
+    .legal-links { display: flex; gap: 16px; }
+    .legal-links a { color: var(--muted); }
     .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); width: max-content; max-width: calc(100vw - 32px); background: #000; color: #fff; padding: 12px 18px; border-radius: 2px; font-size: .92rem; z-index: 50; text-align: center; }
     @media (max-width: 860px) {
       .burger { display: block; }
